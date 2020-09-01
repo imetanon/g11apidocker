@@ -77,13 +77,13 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 
 ## Load 2 Models Prepare for Predict
 
-# Computer Vision Model
-poster_model = tf.keras.models.load_model(
-    "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+# # Computer Vision Model
+# poster_model = tf.keras.models.load_model(
+#     "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 
-# NLP Model
-description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
-tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
+# # NLP Model
+# description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
+# tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
 app = Flask(__name__)
 api = Api(app)
