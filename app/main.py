@@ -86,14 +86,6 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 # tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
 
-global poster_model
-# save default graph in a global var
-global graph
-graph = tf.Graph()
-with graph.as_default():
-    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
-
-
 app = Flask(__name__)
 api = Api(app)
 
@@ -215,7 +207,8 @@ def hello():
 
 # CV Predict Pipeline (Function)
 def poster_predict(image_path, isUrl=False):
-    # poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+    
     if isUrl:
         img_path = tf.keras.utils.get_file(fname=next(
             tempfile._get_candidate_names()), origin=image_path)
