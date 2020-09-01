@@ -212,6 +212,8 @@ def poster_predict(image_path, isUrl=False):
     if isUrl:
         img_path = tf.keras.utils.get_file(fname=next(
             tempfile._get_candidate_names()), origin=image_path)
+    else:
+        img_path = image_path
 
     img = keras.preprocessing.image.load_img(
         img_path, color_mode='rgb', target_size=(IMG_SIZE, IMG_SIZE)
