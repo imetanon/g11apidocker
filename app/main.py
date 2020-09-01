@@ -85,6 +85,13 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 # description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
 # tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
+
+global poster_model
+poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+# save default graph in a global var
+global graph
+graph = tf.get_default_graph()
+
 app = Flask(__name__)
 api = Api(app)
 
@@ -206,7 +213,7 @@ def hello():
 
 # CV Predict Pipeline (Function)
 def poster_predict(image_path, isUrl=False):
-    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+    # poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
     if isUrl:
         img_path = tf.keras.utils.get_file(fname=next(
             tempfile._get_candidate_names()), origin=image_path)
@@ -220,7 +227,8 @@ def poster_predict(image_path, isUrl=False):
     img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
     # Generate prediction
-    predict_value = poster_model.predict(img_array)
+    with graph.as_default():
+        predict_value = poster_model.predict(img_array)
     prediction = (predict_value > 0.5).astype('int')
     prediction = pd.Series(prediction[0])
     prediction = prediction[prediction == 1].index.values
