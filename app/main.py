@@ -81,9 +81,9 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 # poster_model = tf.keras.models.load_model(
 #     "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 
-# NLP Model
-description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
-tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
+# # NLP Model
+# description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
+# tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
 app = Flask(__name__)
 api = Api(app)
@@ -235,32 +235,36 @@ def poster_predict(image_path, isUrl=False):
 
     return response
 
-# # NLP Predict Pipeline (Function)
-# def description_predict(description):
-#     tfidf_vectorizer = TfidfVectorizer(vocabulary=tf1.vocabulary_)
+# NLP Predict Pipeline (Function)
+def description_predict(description):
+    # NLP Model
+    description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
+    tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
-#     # clean text using regex
-#     description = re.sub("[^a-zA-Z]", " ", description)
-#     # remove whitespaces
-#     description = ' '.join(description.split())
-#     # convert text to lowercase
-#     description = description.lower()
+    tfidf_vectorizer = TfidfVectorizer(vocabulary=tf1.vocabulary_)
 
-#     no_stopword_text = [w for w in description.split() if w not in stop_words]
-#     description = ' '.join(no_stopword_text)
+    # clean text using regex
+    description = re.sub("[^a-zA-Z]", " ", description)
+    # remove whitespaces
+    description = ' '.join(description.split())
+    # convert text to lowercase
+    description = description.lower()
 
-#     description_vec = tfidf_vectorizer.fit_transform([description])
+    no_stopword_text = [w for w in description.split() if w not in stop_words]
+    description = ' '.join(no_stopword_text)
 
-#     predict_value = description_model.predict(description_vec)
-#     prediction = (predict_value > 0.5).astype('int')
-#     prediction = pd.Series(prediction[0])
-#     prediction = prediction[prediction == 1].index.values
+    description_vec = tfidf_vectorizer.fit_transform([description])
 
-#     response = {}
-#     response['predict_genres'] = [
-#         f'{DESCRIPTION_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
+    predict_value = description_model.predict(description_vec)
+    prediction = (predict_value > 0.5).astype('int')
+    prediction = pd.Series(prediction[0])
+    prediction = prediction[prediction == 1].index.values
 
-#     return response
+    response = {}
+    response['predict_genres'] = [
+        f'{DESCRIPTION_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
+
+    return response
 
 
 # ### Create RESTful APIs Structure using Flask-RESTful ###
@@ -305,25 +309,25 @@ class ImageGenre(Resource):
         return response
 
 
-# class TextGenre(Resource):
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('text', type=str, required=True, help="Please Specify Text !!!")
-#         super(TextGenre, self).__init__()
+class TextGenre(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('text', type=str, required=True, help="Please Specify Text !!!")
+        super(TextGenre, self).__init__()
 
-#     def get(self):
-#         args = self.reqparse.parse_args()
-#         text = args['text']
-#         response = {}
-#         response['source'] = text
-#         response['predict_genres'] = dict(description_predict(text))[
-#             'predict_genres']
-#         return response
+    def get(self):
+        args = self.reqparse.parse_args()
+        text = args['text']
+        response = {}
+        response['source'] = text
+        response['predict_genres'] = dict(description_predict(text))[
+            'predict_genres']
+        return response
 
 
-# ##
-# # Actually setup the Api resource routing here
-# ##
+##
+# Actually setup the Api resource routing here
+##
 # api.add_resource(Imdb, '/imdb/<title_id>')
-# api.add_resource(ImageGenre, '/genre/image')
-# api.add_resource(TextGenre, '/genre/text')
+api.add_resource(ImageGenre, '/genre/image')
+api.add_resource(TextGenre, '/genre/text')
