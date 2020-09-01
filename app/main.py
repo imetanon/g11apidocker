@@ -222,8 +222,7 @@ def poster_predict(image_path, isUrl=False):
     img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
     # Generate prediction
-    with graph.as_default():
-        predict_value = poster_model.predict(img_array)
+    predict_value = poster_model.predict(img_array)
     prediction = (predict_value > 0.5).astype('int')
     prediction = pd.Series(prediction[0])
     prediction = prediction[prediction == 1].index.values
