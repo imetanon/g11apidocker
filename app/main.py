@@ -161,8 +161,10 @@ def handle_text_message(event):
                 TextSendMessage(text="Bot can't use profile API without user ID"))
 
     else:
+        payload = {'text':'A Hindu-Muslim love story, Kedarnath portrays how a Muslim pithoo saves a Hindu tourist from the Uttrakhand floods at the pilgrimage, and the love that eventually develops between them.'}
+        r = requests.get('https://imetanon.xyz/genre/text', params=payload)
         line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=event.message.text))
+            event.reply_token, TextSendMessage(text=r.text))
 
 # # Other Message Type
 
@@ -269,7 +271,15 @@ def description_predict(description):
 # ### Create RESTful APIs Structure using Flask-RESTful ###
 
 class Imdb(Resource):
-    def get(self, title_id):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('titleId', type=str, required=True,
+                    help="Please Specify Title Id !!!")
+        super(Imdb, self).__init__()
+
+    def get(self):
+        args = self.reqparse.parse_args()
+        title_id = args['titleId']
         print(f"got title_id {title_id}")
 
         # creating instance of IMDb
@@ -327,6 +337,6 @@ class TextGenre(Resource):
 ##
 # Actually setup the Api resource routing here
 ##
-# api.add_resource(Imdb, '/imdb/<title_id>')
+api.add_resource(Imdb, '/imdb')
 api.add_resource(ImageGenre, '/genre/image')
 api.add_resource(TextGenre, '/genre/text')
