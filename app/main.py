@@ -75,21 +75,18 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
                               'Horror', 'Music', 'Musical', 'Mystery', 'Romance', 'Sci-Fi',
                               'Short', 'Sport', 'Thriller', 'War', 'Western']
 
-## Load 2 Models Prepare for Predict
-
-# # Computer Vision Model
-# poster_model = tf.keras.models.load_model(
-#     "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
-
-# # NLP Model
-# description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
-# tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
-
-
 app = Flask(__name__)
 api = Api(app)
 
-poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+## Load 2 Models Prepare for Predict
+
+# Computer Vision Model
+poster_model = tf.keras.models.load_model(
+    "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+
+# NLP Model
+description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
+tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
@@ -240,7 +237,7 @@ def poster_predict(image_path, isUrl=False):
 # NLP Predict Pipeline (Function)
 def description_predict(description):
     # NLP Model
-    description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
+    # description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
     tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
     tfidf_vectorizer = TfidfVectorizer(vocabulary=tf1.vocabulary_)
