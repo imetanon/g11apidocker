@@ -168,33 +168,33 @@ def handle_text_message(event):
 # # Other Message Type
 
 
-# @handler.add(MessageEvent, message=(ImageMessage))
-# def handle_content_message(event):
-#     if isinstance(event.message, ImageMessage):
-#         ext = 'jpg'
-#     else:
-#         return
+@handler.add(MessageEvent, message=(ImageMessage))
+def handle_content_message(event):
+    if isinstance(event.message, ImageMessage):
+        ext = 'jpg'
+    else:
+        return
 
-#     message_content = line_bot_api.get_message_content(event.message.id)
-#     with tempfile.NamedTemporaryFile(dir=static_tmp_path, prefix=ext + '-', delete=False) as tf:
-#         for chunk in message_content.iter_content():
-#             tf.write(chunk)
-#         tempfile_path = tf.name
+    message_content = line_bot_api.get_message_content(event.message.id)
+    with tempfile.NamedTemporaryFile(dir=static_tmp_path, prefix=ext + '-', delete=False) as tf:
+        for chunk in message_content.iter_content():
+            tf.write(chunk)
+        tempfile_path = tf.name
 
-#     dist_path = tempfile_path + '.' + ext
-#     dist_name = os.path.basename(dist_path)
-#     os.rename(tempfile_path, dist_path)
+    dist_path = tempfile_path + '.' + ext
+    dist_name = os.path.basename(dist_path)
+    os.rename(tempfile_path, dist_path)
 
-#     predict_message = json.dumps(poster_predict(
-#         os.path.join('static', 'tmp', dist_name)))
+    predict_message = json.dumps(poster_predict(
+        os.path.join('static', 'tmp', dist_name)))
 
-#     line_bot_api.reply_message(
-#         event.reply_token, [
-#             # TextSendMessage(text='Save content.'),
-#             # TextSendMessage(text=request.host_url + \
-#             #                 os.path.join('static', 'tmp', dist_name)),
-#             TextSendMessage(text=predict_message)
-#         ])
+    line_bot_api.reply_message(
+        event.reply_token, [
+            # TextSendMessage(text='Save content.'),
+            # TextSendMessage(text=request.host_url + \
+            #                 os.path.join('static', 'tmp', dist_name)),
+            TextSendMessage(text=predict_message)
+        ])
 
 
 @app.route("/")
