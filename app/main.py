@@ -31,6 +31,8 @@ from nltk.corpus import stopwords
 from flask import Flask, request, jsonify, abort
 from flask_restful import reqparse, abort, Api, Resource
 
+import requests
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
