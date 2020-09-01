@@ -164,36 +164,36 @@ def handle_text_message(event):
         line_bot_api.reply_message(
             event.reply_token, TextSendMessage(text=event.message.text))
 
-# Other Message Type
+# # Other Message Type
 
 
-@handler.add(MessageEvent, message=(ImageMessage))
-def handle_content_message(event):
-    if isinstance(event.message, ImageMessage):
-        ext = 'jpg'
-    else:
-        return
+# @handler.add(MessageEvent, message=(ImageMessage))
+# def handle_content_message(event):
+#     if isinstance(event.message, ImageMessage):
+#         ext = 'jpg'
+#     else:
+#         return
 
-    message_content = line_bot_api.get_message_content(event.message.id)
-    with tempfile.NamedTemporaryFile(dir=static_tmp_path, prefix=ext + '-', delete=False) as tf:
-        for chunk in message_content.iter_content():
-            tf.write(chunk)
-        tempfile_path = tf.name
+#     message_content = line_bot_api.get_message_content(event.message.id)
+#     with tempfile.NamedTemporaryFile(dir=static_tmp_path, prefix=ext + '-', delete=False) as tf:
+#         for chunk in message_content.iter_content():
+#             tf.write(chunk)
+#         tempfile_path = tf.name
 
-    dist_path = tempfile_path + '.' + ext
-    dist_name = os.path.basename(dist_path)
-    os.rename(tempfile_path, dist_path)
+#     dist_path = tempfile_path + '.' + ext
+#     dist_name = os.path.basename(dist_path)
+#     os.rename(tempfile_path, dist_path)
 
-    predict_message = json.dumps(poster_predict(
-        os.path.join('static', 'tmp', dist_name)))
+#     predict_message = json.dumps(poster_predict(
+#         os.path.join('static', 'tmp', dist_name)))
 
-    line_bot_api.reply_message(
-        event.reply_token, [
-            # TextSendMessage(text='Save content.'),
-            # TextSendMessage(text=request.host_url + \
-            #                 os.path.join('static', 'tmp', dist_name)),
-            TextSendMessage(text=predict_message)
-        ])
+#     line_bot_api.reply_message(
+#         event.reply_token, [
+#             # TextSendMessage(text='Save content.'),
+#             # TextSendMessage(text=request.host_url + \
+#             #                 os.path.join('static', 'tmp', dist_name)),
+#             TextSendMessage(text=predict_message)
+#         ])
 
 
 @app.route("/")
@@ -204,123 +204,123 @@ def hello():
     )
     return message
 
-# CV Predict Pipeline (Function)
-def poster_predict(image_path, isUrl=False):
-    if isUrl:
-        img_path = tf.keras.utils.get_file(fname=next(
-            tempfile._get_candidate_names()), origin=image_path)
+# # CV Predict Pipeline (Function)
+# def poster_predict(image_path, isUrl=False):
+#     if isUrl:
+#         img_path = tf.keras.utils.get_file(fname=next(
+#             tempfile._get_candidate_names()), origin=image_path)
 
-    img = keras.preprocessing.image.load_img(
-        img_path, color_mode='rgb', target_size=(IMG_SIZE, IMG_SIZE)
-    )
+#     img = keras.preprocessing.image.load_img(
+#         img_path, color_mode='rgb', target_size=(IMG_SIZE, IMG_SIZE)
+#     )
 
-    img_array = keras.preprocessing.image.img_to_array(img)
-    img_array = img_array/255
-    img_array = tf.expand_dims(img_array, 0)  # Create a batch
+#     img_array = keras.preprocessing.image.img_to_array(img)
+#     img_array = img_array/255
+#     img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
-    # Generate prediction
-    predict_value = poster_model.predict(img_array)
-    prediction = (predict_value > 0.5).astype('int')
-    prediction = pd.Series(prediction[0])
-    prediction = prediction[prediction == 1].index.values
+#     # Generate prediction
+#     predict_value = poster_model.predict(img_array)
+#     prediction = (predict_value > 0.5).astype('int')
+#     prediction = pd.Series(prediction[0])
+#     prediction = prediction[prediction == 1].index.values
 
-    os.remove(img_path)
+#     os.remove(img_path)
 
-    response = {}
-    response['predict_genres'] = [
-        f'{POSTER_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
+#     response = {}
+#     response['predict_genres'] = [
+#         f'{POSTER_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
 
-    return response
+#     return response
 
-# NLP Predict Pipeline (Function)
-def description_predict(description):
-    tfidf_vectorizer = TfidfVectorizer(vocabulary=tf1.vocabulary_)
+# # NLP Predict Pipeline (Function)
+# def description_predict(description):
+#     tfidf_vectorizer = TfidfVectorizer(vocabulary=tf1.vocabulary_)
 
-    # clean text using regex
-    description = re.sub("[^a-zA-Z]", " ", description)
-    # remove whitespaces
-    description = ' '.join(description.split())
-    # convert text to lowercase
-    description = description.lower()
+#     # clean text using regex
+#     description = re.sub("[^a-zA-Z]", " ", description)
+#     # remove whitespaces
+#     description = ' '.join(description.split())
+#     # convert text to lowercase
+#     description = description.lower()
 
-    no_stopword_text = [w for w in description.split() if w not in stop_words]
-    description = ' '.join(no_stopword_text)
+#     no_stopword_text = [w for w in description.split() if w not in stop_words]
+#     description = ' '.join(no_stopword_text)
 
-    description_vec = tfidf_vectorizer.fit_transform([description])
+#     description_vec = tfidf_vectorizer.fit_transform([description])
 
-    predict_value = description_model.predict(description_vec)
-    prediction = (predict_value > 0.5).astype('int')
-    prediction = pd.Series(prediction[0])
-    prediction = prediction[prediction == 1].index.values
+#     predict_value = description_model.predict(description_vec)
+#     prediction = (predict_value > 0.5).astype('int')
+#     prediction = pd.Series(prediction[0])
+#     prediction = prediction[prediction == 1].index.values
 
-    response = {}
-    response['predict_genres'] = [
-        f'{DESCRIPTION_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
+#     response = {}
+#     response['predict_genres'] = [
+#         f'{DESCRIPTION_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
 
-    return response
-
-
-### Create RESTful APIs Structure using Flask-RESTful ###
-
-class Imdb(Resource):
-    def get(self, title_id):
-        print(f"got title_id {title_id}")
-
-        # creating instance of IMDb
-        ia = imdb.IMDb()
-        movie = ia.get_movie(int(title_id[2:]))
-
-        response = {}
-        response['id'] = title_id
-        response['title'] = movie['title']
-        response['actual_imdb_genres'] = movie['genres']
-        response['description'] = movie['plot'][0].split('::')[0]
-        movie_img_url = movie['full-size cover url']
-
-        response['poster_predict_genres'] = dict(poster_predict(
-            movie_img_url, isUrl=True))['predict_genres']
-        response['description_predict_genres'] = dict(description_predict(
-            str(response['description'])))['predict_genres']
-
-        return response
+#     return response
 
 
-class ImageGenre(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('imgurl', required=True,
-                    help="Please Specify Image Url !!!")
-        super(ImageGenre, self).__init__()
+# ### Create RESTful APIs Structure using Flask-RESTful ###
 
-    def get(self):
-        args = self.reqparse.parse_args()
-        image_url = args['imgurl']
-        response = {}
-        response['source'] = image_url
-        response['predict_genres'] = dict(poster_predict(
-            image_url, isUrl=True))['predict_genres']
-        return response
+# class Imdb(Resource):
+#     def get(self, title_id):
+#         print(f"got title_id {title_id}")
 
+#         # creating instance of IMDb
+#         ia = imdb.IMDb()
+#         movie = ia.get_movie(int(title_id[2:]))
 
-class TextGenre(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('text', type=str, required=True, help="Please Specify Text !!!")
-        super(TextGenre, self).__init__()
+#         response = {}
+#         response['id'] = title_id
+#         response['title'] = movie['title']
+#         response['actual_imdb_genres'] = movie['genres']
+#         response['description'] = movie['plot'][0].split('::')[0]
+#         movie_img_url = movie['full-size cover url']
 
-    def get(self):
-        args = self.reqparse.parse_args()
-        text = args['text']
-        response = {}
-        response['source'] = text
-        response['predict_genres'] = dict(description_predict(text))[
-            'predict_genres']
-        return response
+#         response['poster_predict_genres'] = dict(poster_predict(
+#             movie_img_url, isUrl=True))['predict_genres']
+#         response['description_predict_genres'] = dict(description_predict(
+#             str(response['description'])))['predict_genres']
+
+#         return response
 
 
-##
-# Actually setup the Api resource routing here
-##
-api.add_resource(Imdb, '/imdb/<title_id>')
-api.add_resource(ImageGenre, '/genre/image')
-api.add_resource(TextGenre, '/genre/text')
+# class ImageGenre(Resource):
+#     def __init__(self):
+#         self.reqparse = reqparse.RequestParser()
+#         self.reqparse.add_argument('imgurl', required=True,
+#                     help="Please Specify Image Url !!!")
+#         super(ImageGenre, self).__init__()
+
+#     def get(self):
+#         args = self.reqparse.parse_args()
+#         image_url = args['imgurl']
+#         response = {}
+#         response['source'] = image_url
+#         response['predict_genres'] = dict(poster_predict(
+#             image_url, isUrl=True))['predict_genres']
+#         return response
+
+
+# class TextGenre(Resource):
+#     def __init__(self):
+#         self.reqparse = reqparse.RequestParser()
+#         self.reqparse.add_argument('text', type=str, required=True, help="Please Specify Text !!!")
+#         super(TextGenre, self).__init__()
+
+#     def get(self):
+#         args = self.reqparse.parse_args()
+#         text = args['text']
+#         response = {}
+#         response['source'] = text
+#         response['predict_genres'] = dict(description_predict(text))[
+#             'predict_genres']
+#         return response
+
+
+# ##
+# # Actually setup the Api resource routing here
+# ##
+# api.add_resource(Imdb, '/imdb/<title_id>')
+# api.add_resource(ImageGenre, '/genre/image')
+# api.add_resource(TextGenre, '/genre/text')
