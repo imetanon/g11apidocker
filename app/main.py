@@ -89,6 +89,8 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 app = Flask(__name__)
 api = Api(app)
 
+poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
 channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', None)
@@ -207,8 +209,6 @@ def hello():
 
 # CV Predict Pipeline (Function)
 def poster_predict(image_path, isUrl=False):
-    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
-    
     if isUrl:
         img_path = tf.keras.utils.get_file(fname=next(
             tempfile._get_candidate_names()), origin=image_path)
