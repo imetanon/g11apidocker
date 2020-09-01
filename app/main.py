@@ -87,10 +87,12 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 
 
 global poster_model
-poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 # save default graph in a global var
 global graph
 graph = tf.get_default_graph()
+with graph.as_default():
+    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+
 
 app = Flask(__name__)
 api = Api(app)
