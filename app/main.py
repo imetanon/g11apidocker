@@ -78,8 +78,8 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 ## Load 2 Models Prepare for Predict
 
 # # Computer Vision Model
-poster_model = tf.keras.models.load_model(
-    "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+# poster_model = tf.keras.models.load_model(
+#     "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 
 # NLP Model
 description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
@@ -204,33 +204,36 @@ def hello():
     )
     return message
 
-# # CV Predict Pipeline (Function)
-# def poster_predict(image_path, isUrl=False):
-#     if isUrl:
-#         img_path = tf.keras.utils.get_file(fname=next(
-#             tempfile._get_candidate_names()), origin=image_path)
+# CV Predict Pipeline (Function)
+def poster_predict(image_path, isUrl=False):
+    
+    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
+    
+    if isUrl:
+        img_path = tf.keras.utils.get_file(fname=next(
+            tempfile._get_candidate_names()), origin=image_path)
 
-#     img = keras.preprocessing.image.load_img(
-#         img_path, color_mode='rgb', target_size=(IMG_SIZE, IMG_SIZE)
-#     )
+    img = keras.preprocessing.image.load_img(
+        img_path, color_mode='rgb', target_size=(IMG_SIZE, IMG_SIZE)
+    )
 
-#     img_array = keras.preprocessing.image.img_to_array(img)
-#     img_array = img_array/255
-#     img_array = tf.expand_dims(img_array, 0)  # Create a batch
+    img_array = keras.preprocessing.image.img_to_array(img)
+    img_array = img_array/255
+    img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
-#     # Generate prediction
-#     predict_value = poster_model.predict(img_array)
-#     prediction = (predict_value > 0.5).astype('int')
-#     prediction = pd.Series(prediction[0])
-#     prediction = prediction[prediction == 1].index.values
+    # Generate prediction
+    predict_value = poster_model.predict(img_array)
+    prediction = (predict_value > 0.5).astype('int')
+    prediction = pd.Series(prediction[0])
+    prediction = prediction[prediction == 1].index.values
 
-#     os.remove(img_path)
+    os.remove(img_path)
 
-#     response = {}
-#     response['predict_genres'] = [
-#         f'{POSTER_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
+    response = {}
+    response['predict_genres'] = [
+        f'{POSTER_PREDICT_LABELS[p]}: {predict_value.tolist()[0][p]:.2f}' for p in prediction]
 
-#     return response
+    return response
 
 # # NLP Predict Pipeline (Function)
 # def description_predict(description):
@@ -285,21 +288,21 @@ def hello():
 #         return response
 
 
-# class ImageGenre(Resource):
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('imgurl', required=True,
-#                     help="Please Specify Image Url !!!")
-#         super(ImageGenre, self).__init__()
+class ImageGenre(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('imgurl', required=True,
+                    help="Please Specify Image Url !!!")
+        super(ImageGenre, self).__init__()
 
-#     def get(self):
-#         args = self.reqparse.parse_args()
-#         image_url = args['imgurl']
-#         response = {}
-#         response['source'] = image_url
-#         response['predict_genres'] = dict(poster_predict(
-#             image_url, isUrl=True))['predict_genres']
-#         return response
+    def get(self):
+        args = self.reqparse.parse_args()
+        image_url = args['imgurl']
+        response = {}
+        response['source'] = image_url
+        response['predict_genres'] = dict(poster_predict(
+            image_url, isUrl=True))['predict_genres']
+        return response
 
 
 # class TextGenre(Resource):
