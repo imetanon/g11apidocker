@@ -78,7 +78,6 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
 ## Load 2 Models Prepare for Predict
 
 # # Computer Vision Model
-poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 # poster_model = tf.keras.models.load_model(
 #     "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 
@@ -207,7 +206,7 @@ def hello():
 
 # CV Predict Pipeline (Function)
 def poster_predict(image_path, isUrl=False):
-    
+    poster_model = tf.keras.models.load_model("model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
     if isUrl:
         img_path = tf.keras.utils.get_file(fname=next(
             tempfile._get_candidate_names()), origin=image_path)
@@ -268,27 +267,27 @@ def description_predict(description):
 
 # ### Create RESTful APIs Structure using Flask-RESTful ###
 
-# class Imdb(Resource):
-#     def get(self, title_id):
-#         print(f"got title_id {title_id}")
+class Imdb(Resource):
+    def get(self, title_id):
+        print(f"got title_id {title_id}")
 
-#         # creating instance of IMDb
-#         ia = imdb.IMDb()
-#         movie = ia.get_movie(int(title_id[2:]))
+        # creating instance of IMDb
+        ia = imdb.IMDb()
+        movie = ia.get_movie(int(title_id[2:]))
 
-#         response = {}
-#         response['id'] = title_id
-#         response['title'] = movie['title']
-#         response['actual_imdb_genres'] = movie['genres']
-#         response['description'] = movie['plot'][0].split('::')[0]
-#         movie_img_url = movie['full-size cover url']
+        response = {}
+        response['id'] = title_id
+        response['title'] = movie['title']
+        response['actual_imdb_genres'] = movie['genres']
+        response['description'] = movie['plot'][0].split('::')[0]
+        movie_img_url = movie['full-size cover url']
 
-#         response['poster_predict_genres'] = dict(poster_predict(
-#             movie_img_url, isUrl=True))['predict_genres']
-#         response['description_predict_genres'] = dict(description_predict(
-#             str(response['description'])))['predict_genres']
+        response['poster_predict_genres'] = dict(poster_predict(
+            movie_img_url, isUrl=True))['predict_genres']
+        response['description_predict_genres'] = dict(description_predict(
+            str(response['description'])))['predict_genres']
 
-#         return response
+        return response
 
 
 class ImageGenre(Resource):
