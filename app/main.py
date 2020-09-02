@@ -239,7 +239,7 @@ def handle_content_message(event):
     os.rename(tempfile_path, dist_path)
     
     params = {
-        'imgurl': request.host_url + os.path.join('static', 'tmp', dist_name)
+        'imgurl': "https://imetanon.xyz/" + os.path.join('static', 'tmp', dist_name)
     }
     
     predict_response = dict(request_predict(PREDICT_TYPE_IMAGE,params).json())['predict_genres']
