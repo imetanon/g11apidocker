@@ -205,6 +205,7 @@ def handle_text_message(event):
             alt_text='Confirm alt text', template=confirm_template)
         line_bot_api.reply_message(event.reply_token, template_message)
     else:
+<<<<<<< HEAD
         endpoint = "https://dialogflow.cloud.google.com/v1/integrations/line/webhook/1ad8c15c-11c1-4b0d-9ca5-a85e0023341a"
         data = request.get_data()
         headers = {
@@ -254,6 +255,42 @@ def handle_content_message(event):
             # TextSendMessage(text='Save content.'),
             # TextSendMessage(text=request.host_url + os.path.join('static', 'tmp', dist_name))
             TextSendMessage(text=str(predict_response))
+=======
+        payload = {'text':'A Hindu-Muslim love story, Kedarnath portrays how a Muslim pithoo saves a Hindu tourist from the Uttrakhand floods at the pilgrimage, and the love that eventually develops between them.'}
+        r = requests.get('https://imetanon.xyz/genre/text', params=payload)
+        line_bot_api.reply_message(
+            event.reply_token, TextSendMessage(text=r.text))
+
+# # Other Message Type
+
+
+@handler.add(MessageEvent, message=(ImageMessage))
+def handle_content_message(event):
+    if isinstance(event.message, ImageMessage):
+        ext = 'jpg'
+    else:
+        return
+
+    message_content = line_bot_api.get_message_content(event.message.id)
+    with tempfile.NamedTemporaryFile(dir=static_tmp_path, prefix=ext + '-', delete=False) as tf:
+        for chunk in message_content.iter_content():
+            tf.write(chunk)
+        tempfile_path = tf.name
+
+    dist_path = tempfile_path + '.' + ext
+    dist_name = os.path.basename(dist_path)
+    os.rename(tempfile_path, dist_path)
+
+    predict_message = json.dumps(poster_predict(
+        os.path.join('static', 'tmp', dist_name)))
+
+    line_bot_api.reply_message(
+        event.reply_token, [
+            # TextSendMessage(text='Save content.'),
+            # TextSendMessage(text=request.host_url + \
+            #                 os.path.join('static', 'tmp', dist_name)),
+            TextSendMessage(text=predict_message)
+>>>>>>> a001f2b67d1a3a1e130de2d36a1a27479861a10f
         ])
 
 
