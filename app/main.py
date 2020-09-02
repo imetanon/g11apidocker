@@ -136,6 +136,7 @@ def request_predict(type, params={}):
     url = API_HOST + ENDPOINT_LIST[type]
     headers = {'Authorization': 'Bearer ' + API_TOKEN}
     response = requests.get(url=url, headers=headers, params=params)
+    print(params)
 
     print(response)
     
