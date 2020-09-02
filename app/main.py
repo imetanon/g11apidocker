@@ -77,7 +77,7 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
                               'Horror', 'Music', 'Musical', 'Mystery', 'Romance', 'Sci-Fi',
                               'Short', 'Sport', 'Thriller', 'War', 'Western']
 
-API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTkyOTA2NjcsImlkIjoiMGM0NDdjNzgtODA2OC00MzUxLWE4ZjEtZTBmOWZiYTU4ZjY5IiwiaXNzIjoiSjhoZVJDYTM0ZUZyY2hNMm9JaE5pR3M4MVZuRE9QQTciLCJuYW1lIjoiaU1ldGFub24iLCJwaWMiOiJodHRwczovL3Byb2ZpbGUubGluZS1zY2RuLm5ldC8waHhGajg4eVRfSjJsWFFRNHpBSVJZUG1zRUtRUWdieUVoTDNJNlczUkNmZzFfSWpWcVkzVnBYWElUZUY0b2MyTS1PQ2RoWDN0Q2ZGa3YifQ.0i2bXZS-wBAwpIQWH1qYjq4K-I9EuWOaJSvEcU2a1jg'
+API_TOKEN = os.getenv('BOTNOI_TOKEN', None)
 
 PREDICT_TYPE_IMAGE = 1
 PREDICT_TYPE_TEXT = 2
