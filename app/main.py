@@ -28,7 +28,7 @@ from linebot import (
     LineBotApi, WebhookHandler
 )
 from nltk.corpus import stopwords
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, abort, make_response, jsonify
 from flask_restful import reqparse, abort, Api, Resource
 
 import requests
@@ -77,6 +77,18 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
                               'Horror', 'Music', 'Musical', 'Mystery', 'Romance', 'Sci-Fi',
                               'Short', 'Sport', 'Thriller', 'War', 'Western']
 
+API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTkyOTA2NjcsImlkIjoiMGM0NDdjNzgtODA2OC00MzUxLWE4ZjEtZTBmOWZiYTU4ZjY5IiwiaXNzIjoiSjhoZVJDYTM0ZUZyY2hNMm9JaE5pR3M4MVZuRE9QQTciLCJuYW1lIjoiaU1ldGFub24iLCJwaWMiOiJodHRwczovL3Byb2ZpbGUubGluZS1zY2RuLm5ldC8waHhGajg4eVRfSjJsWFFRNHpBSVJZUG1zRUtRUWdieUVoTDNJNlczUkNmZzFfSWpWcVkzVnBYWElUZUY0b2MyTS1PQ2RoWDN0Q2ZGa3YifQ.0i2bXZS-wBAwpIQWH1qYjq4K-I9EuWOaJSvEcU2a1jg'
+
+PREDICT_TYPE_IMAGE = 1
+PREDICT_TYPE_TEXT = 2
+
+API_HOST = "https://openapi.botnoi.ai/service-api"
+
+ENDPOINT_LIST = {
+    PREDICT_TYPE_IMAGE: '/g11-image-predict-genre',
+    PREDICT_TYPE_TEXT: '/g11-text-predict-genre'
+}
+
 app = Flask(__name__)
 api = Api(app)
 
@@ -119,6 +131,31 @@ def make_static_tmp_dir():
 make_static_tmp_dir()
 
 
+def request_predict(type, params={}):
+    
+    url = API_HOST + ENDPOINT_LIST[type]
+    headers = {'Authorization': 'Bearer ' + API_TOKEN}
+    response = requests.get(url=url, headers=headers, params=params)
+    
+    return response
+
+# create a route for webhook
+@app.route('/webhook', methods=['GET', 'POST'])
+def webhook():
+    # build a request object
+    req = request.get_json(force=True)
+
+    # fetch action from json
+    queryResult = req.get('queryResult')
+    
+    print("Query text:", queryResult.get('queryText'))
+    print("Detected intent:", queryResult.get('intent').get('displayName'))
+    print("Fulfillment text:", queryResult.get('fulfillmentText'))
+
+    # return a fulfillment response
+    return None
+
+
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -151,26 +188,43 @@ def handle_text_message(event):
             profile = line_bot_api.get_profile(event.source.user_id)
             line_bot_api.reply_message(
                 event.reply_token, [
-                    TextSendMessage(text='Display name: ' +
-                                    profile.display_name),
-                    TextSendMessage(text='Status message: ' +
-                                    str(profile.status_message))
+                    TextSendMessage(text='Display name: ' + profile.display_name),
+                    TextSendMessage(text='Status message: ' + str(profile.status_message))
                 ]
             )
         else:
             line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text="Bot can't use profile API without user ID"))
-
+    elif len(text) >= 200:
+        confirm_template = ConfirmTemplate(text='ต้องการให้เราทำนายประเภทของหนัง (Genre) จากข้อความไหมคะ', actions=[
+            MessageAction(label='ต้องการ', text=''),
+            MessageAction(label='No', text='No!'),
+        ])
+        template_message = TemplateSendMessage(
+            alt_text='Confirm alt text', template=confirm_template)
+        line_bot_api.reply_message(event.reply_token, template_message)
     else:
-        payload = {'text':'A Hindu-Muslim love story, Kedarnath portrays how a Muslim pithoo saves a Hindu tourist from the Uttrakhand floods at the pilgrimage, and the love that eventually develops between them.'}
-        r = requests.get('https://imetanon.xyz/genre/text', params=payload)
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=r.text))
+        endpoint = "https://dialogflow.cloud.google.com/v1/integrations/line/webhook/1ad8c15c-11c1-4b0d-9ca5-a85e0023341a"
+        data = request.get_data()
+        headers = {
+            'hosts': "bots.dialogflow.com"
+        }
+        response = requests.post(url=endpoint, headers=headers, data=data)
+        return response
 
-# # Other Message Type
+
+@handler.add(MessageEvent, message=StickerMessage)
+def handle_sticker_message(event):
+    line_bot_api.reply_message(
+        event.reply_token,
+        StickerSendMessage(
+            package_id=event.message.package_id,
+            sticker_id=event.message.sticker_id)
+    )
 
 
+# Other Message Type
 @handler.add(MessageEvent, message=(ImageMessage))
 def handle_content_message(event):
     if isinstance(event.message, ImageMessage):
@@ -187,16 +241,19 @@ def handle_content_message(event):
     dist_path = tempfile_path + '.' + ext
     dist_name = os.path.basename(dist_path)
     os.rename(tempfile_path, dist_path)
-
-    predict_message = json.dumps(poster_predict(
-        os.path.join('static', 'tmp', dist_name)))
+    
+    params = {
+        'imgurl': request.host_url + os.path.join('static', 'tmp', dist_name)
+    }
+    
+    predict_response = dict(request_predict(PREDICT_TYPE_IMAGE,params).json())['predict_genres']
+    os.remove(os.path.join('static', 'tmp', dist_name))
 
     line_bot_api.reply_message(
         event.reply_token, [
             # TextSendMessage(text='Save content.'),
-            # TextSendMessage(text=request.host_url + \
-            #                 os.path.join('static', 'tmp', dist_name)),
-            TextSendMessage(text=predict_message)
+            # TextSendMessage(text=request.host_url + os.path.join('static', 'tmp', dist_name))
+            TextSendMessage(text=str(predict_response))
         ])
 
 
