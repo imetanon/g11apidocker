@@ -196,14 +196,6 @@ def handle_text_message(event):
             line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text="Bot can't use profile API without user ID"))
-    elif len(text) >= 200:
-        confirm_template = ConfirmTemplate(text='ต้องการให้เราทำนายประเภทของหนัง (Genre) จากข้อความไหมคะ', actions=[
-            MessageAction(label='ต้องการ', text=''),
-            MessageAction(label='No', text='No!'),
-        ])
-        template_message = TemplateSendMessage(
-            alt_text='Confirm alt text', template=confirm_template)
-        line_bot_api.reply_message(event.reply_token, template_message)
     else:
         endpoint = "https://dialogflow.cloud.google.com/v1/integrations/line/webhook/1ad8c15c-11c1-4b0d-9ca5-a85e0023341a"
         data = request.get_data()
