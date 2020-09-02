@@ -136,9 +136,6 @@ def request_predict(type, params={}):
     url = API_HOST + ENDPOINT_LIST[type]
     headers = {'Authorization': 'Bearer ' + API_TOKEN}
     response = requests.get(url=url, headers=headers, params=params)
-    print(params)
-
-    print(response)
     
     return response
 
@@ -239,11 +236,11 @@ def handle_content_message(event):
     os.rename(tempfile_path, dist_path)
     
     params = {
-        'imgurl': "https://imetanon.xyz/" + os.path.join('static', 'tmp', dist_name)
+        'imgurl': request.host_url + os.path.join('static', 'tmp', dist_name)
     }
     
     predict_response = dict(request_predict(PREDICT_TYPE_IMAGE,params).json())['predict_genres']
-    # os.remove(os.path.join('static', 'tmp', dist_name))
+    os.remove(os.path.join('static', 'tmp', dist_name))
 
     line_bot_api.reply_message(
         event.reply_token, [
