@@ -23,3 +23,10 @@ pyvenv.cfg
 .venv
 pip-selfcheck.json
 venv/
+p-selfcheck.json
+venv/
+
+### dotenv ###
+.env
+
+# End of https://www.toptal.com/developers/gitignore/api/dotenv
