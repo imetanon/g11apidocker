@@ -5,28 +5,7 @@ import errno
 import json
 import re
 import imdb
-from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage,
-    SourceUser, SourceGroup, SourceRoom,
-    TemplateSendMessage, ConfirmTemplate, MessageAction,
-    ButtonsTemplate, ImageCarouselTemplate, ImageCarouselColumn, URIAction,
-    PostbackAction, DatetimePickerAction,
-    CameraAction, CameraRollAction, LocationAction,
-    CarouselTemplate, CarouselColumn, PostbackEvent,
-    StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage,
-    ImageMessage, VideoMessage, AudioMessage, FileMessage,
-    UnfollowEvent, FollowEvent, JoinEvent, LeaveEvent, BeaconEvent,
-    MemberJoinedEvent, MemberLeftEvent,
-    FlexSendMessage, BubbleContainer, ImageComponent, BoxComponent,
-    TextComponent, SpacerComponent, IconComponent, ButtonComponent,
-    SeparatorComponent, QuickReply, QuickReplyButton,
-    ImageSendMessage)
-from linebot.exceptions import (
-    LineBotApiError, InvalidSignatureError
-)
-from linebot import (
-    LineBotApi, WebhookHandler
-)
+
 from nltk.corpus import stopwords
 from flask import Flask, request, abort, make_response, jsonify
 from flask_restful import reqparse, abort, Api, Resource
@@ -77,18 +56,6 @@ DESCRIPTION_PREDICT_LABELS = ['Action', 'Adult', 'Adventure', 'Animation', 'Biog
                               'Horror', 'Music', 'Musical', 'Mystery', 'Romance', 'Sci-Fi',
                               'Short', 'Sport', 'Thriller', 'War', 'Western']
 
-API_TOKEN = os.getenv('BOTNOI_TOKEN', None)
-
-PREDICT_TYPE_IMAGE = 1
-PREDICT_TYPE_TEXT = 2
-
-API_HOST = "https://openapi.botnoi.ai/service-api"
-
-ENDPOINT_LIST = {
-    PREDICT_TYPE_IMAGE: '/g11-image-predict-genre',
-    PREDICT_TYPE_TEXT: '/g11-text-predict-genre'
-}
-
 app = Flask(__name__)
 api = Api(app)
 
@@ -101,154 +68,6 @@ poster_model = tf.keras.models.load_model(
 # NLP Model
 description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
 tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
-
-# get channel_secret and channel_access_token from your environment variable
-channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
-channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', None)
-if channel_secret is None or channel_access_token is None:
-    print('Specify LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN as environment variables.')
-    sys.exit(1)
-
-line_bot_api = LineBotApi(channel_access_token)
-handler = WebhookHandler(channel_secret)
-
-static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
-
-# function for create tmp dir for download content
-
-
-def make_static_tmp_dir():
-    try:
-        os.makedirs(static_tmp_path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(static_tmp_path):
-            pass
-        else:
-            raise
-
-
-# create tmp dir for download content
-make_static_tmp_dir()
-
-
-def request_predict(type, params={}):
-    
-    url = API_HOST + ENDPOINT_LIST[type]
-    headers = {'Authorization': 'Bearer ' + API_TOKEN}
-    response = requests.get(url=url, headers=headers, params=params)
-    
-    return response
-
-# create a route for webhook
-@app.route('/webhook', methods=['GET', 'POST'])
-def webhook():
-    # build a request object
-    req = request.get_json(force=True)
-
-    # fetch action from json
-    queryResult = req.get('queryResult')
-    
-    print("Query text:", queryResult.get('queryText'))
-    print("Detected intent:", queryResult.get('intent').get('displayName'))
-    print("Fulfillment text:", queryResult.get('fulfillmentText'))
-
-    # return a fulfillment response
-    return None
-
-
-@app.route("/callback", methods=['POST'])
-def callback():
-    # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
-
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
-
-    # handle webhook body
-    try:
-        handler.handle(body, signature)
-    except LineBotApiError as e:
-        print("Got exception from LINE Messaging API: %s\n" % e.message)
-        for m in e.error.details:
-            print("  %s: %s" % (m.property, m.message))
-        print("\n")
-    except InvalidSignatureError:
-        abort(400)
-
-    return 'OK'
-
-
-@handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event):
-    text = event.message.text
-
-    if text == 'profile':
-        if isinstance(event.source, SourceUser):
-            profile = line_bot_api.get_profile(event.source.user_id)
-            line_bot_api.reply_message(
-                event.reply_token, [
-                    TextSendMessage(text='Display name: ' + profile.display_name),
-                    TextSendMessage(text='Status message: ' + str(profile.status_message))
-                ]
-            )
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="Bot can't use profile API without user ID"))
-    else:
-        endpoint = "https://dialogflow.cloud.google.com/v1/integrations/line/webhook/1ad8c15c-11c1-4b0d-9ca5-a85e0023341a"
-        data = request.get_data()
-        headers = {
-            'hosts': "bots.dialogflow.com"
-        }
-        response = requests.post(url=endpoint, headers=headers, data=data)
-        return response
-
-
-
-@handler.add(MessageEvent, message=StickerMessage)
-def handle_sticker_message(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        StickerSendMessage(
-            package_id=event.message.package_id,
-            sticker_id=event.message.sticker_id)
-    )
-
-
-# Other Message Type
-@handler.add(MessageEvent, message=(ImageMessage))
-def handle_content_message(event):
-    if isinstance(event.message, ImageMessage):
-        ext = 'jpg'
-    else:
-        return
-
-    message_content = line_bot_api.get_message_content(event.message.id)
-    with tempfile.NamedTemporaryFile(dir=static_tmp_path, prefix=ext + '-', delete=False) as tf:
-        for chunk in message_content.iter_content():
-            tf.write(chunk)
-        tempfile_path = tf.name
-
-    dist_path = tempfile_path + '.' + ext
-    dist_name = os.path.basename(dist_path)
-    os.rename(tempfile_path, dist_path)
-    
-    params = {
-        'imgurl': request.host_url + os.path.join('static', 'tmp', dist_name)
-    }
-    
-    predict_response = dict(request_predict(PREDICT_TYPE_IMAGE,params).json())['predict_genres']
-    os.remove(os.path.join('static', 'tmp', dist_name))
-
-    line_bot_api.reply_message(
-        event.reply_token, [
-            # TextSendMessage(text='Save content.'),
-            # TextSendMessage(text=request.host_url + os.path.join('static', 'tmp', dist_name))
-            TextSendMessage(text=str(predict_response))
-        ])
-
 
 @app.route("/")
 def hello():
