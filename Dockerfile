@@ -1,4 +1,4 @@
-FROM tiangolo/meinheld-gunicorn:python3.8 as builder
+FROM tiangolo/meinheld-gunicorn:python3.6 as builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY ./requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 
-FROM tiangolo/meinheld-gunicorn:python3.8 
+FROM tiangolo/meinheld-gunicorn:python3.6
 
 COPY ./app /app
 
