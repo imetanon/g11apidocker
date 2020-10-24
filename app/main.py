@@ -4,7 +4,6 @@ import os
 import errno
 import json
 import re
-import imdb
 
 from nltk.corpus import stopwords
 from flask import Flask, request, abort, make_response, jsonify
@@ -112,6 +111,7 @@ def poster_predict(image_path, isUrl=False):
 
 
 def place_predict(image_path, isUrl=False):
+
     if isUrl:
         img_path = tf.keras.utils.get_file(fname=next(
             tempfile._get_candidate_names()), origin=image_path)
@@ -253,15 +253,14 @@ class ImagePlace(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('imgurl', required=True,
                     help="Please Specify Image Url !!!")
-        super(ImageGenre, self).__init__()
+        super(ImagePlace, self).__init__()
 
     def get(self):
         args = self.reqparse.parse_args()
         image_url = args['imgurl']
         response = {}
         response['source'] = image_url
-        response['predict_genres'] = dict(poster_predict(
-            image_url, isUrl=True))['predict_genres']
+        response['predict_category'] = place_predict(image_url, isUrl=True)
         return response
 
 
