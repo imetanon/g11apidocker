@@ -66,7 +66,7 @@ api = Api(app)
 poster_model = tf.keras.models.load_model(
     "model_20200829.h5", compile=False, custom_objects={'KerasLayer': hub.KerasLayer})
 
-place_model = tf.keras.models.load_model("model_ResNetV2.h5")
+place_model = tf.keras.models.load_model("model_ResNetV2.h5", compile=False)
 
 # NLP Model
 description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
