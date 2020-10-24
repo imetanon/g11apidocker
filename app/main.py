@@ -68,8 +68,8 @@ api = Api(app)
 place_model = tf.keras.models.load_model("model_ResNetV2.h5")
 
 # NLP Model
-description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
-tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
+# description_model = pickle.load(open('model_description_20200831.pkl', 'rb'))
+# tf1 = pickle.load(open("tfidf1.pkl", 'rb'))
 
 
 @app.route("/")
